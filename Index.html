@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsightPro | Dark Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            background-color: #0f172a; 
+            color: #f1f5f9; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+        }
+        .glass-card { 
+            background: #1e293b; 
+            border: 1px solid #334155; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .primary-gradient { 
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); 
+        }
+        .input-dark {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #f1f5f9;
+            transition: all 0.3s ease;
+        }
+        .input-dark:focus {
+            border-color: #60a5fa;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <nav class="bg-[#1e293b]/80 backdrop-blur-md border-b border-slate-700 py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-blue-400 flex items-center gap-2">
+                <span class="p-2 bg-blue-500/10 rounded-lg text-blue-400">🛡️</span> InsightPro
+            </h1>
+            <div class="flex items-center gap-3">
+                <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Secure Analytics Active</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+        <div class="grid lg:grid-cols-5 gap-8">
+            
+            <div class="lg:col-span-2 space-y-6">
+                <div class="glass-card p-6 rounded-2xl">
+                    <h2 class="text-lg font-bold mb-1 text-white">Identity Scan</h2>
+                    <p class="text-xs text-slate-400 mb-6">Verify Name, Phone, Email, or History</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider ml-1">Search Parameters</label>
+                            <input type="text" id="target" placeholder="Phone, Email, or @User" 
+                                class="w-full mt-1 p-3 input-dark rounded-xl">
+                        </div>
+
+                        <div class="p-4 border-2 border-dashed border-slate-700 rounded-xl bg-slate-900/50">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase block mb-2">Visual ID (Photo Upload)</label>
+                            <input type="file" id="imageInput" class="text-xs w-full text-slate-400 file:mr-4 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                        </div>
+
+                        <button onclick="analyzeTarget()" id="mainBtn" class="primary-gradient w-full text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-blue-500/20 hover:-translate-y-0.5 transition-all">
+                            Verify Now
+                        </button>
+                    </div>
+                </div>
+
+                <div id="scamIndicator" class="glass-card p-4 rounded-2xl border-l-4 border-blue-500 flex items-center gap-4 transition-colors duration-500">
+                    <div class="text-2xl" id="statusIcon">📡</div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase">System Status</p>
+                        <p class="text-sm font-medium text-slate-200" id="statusText">Awaiting input...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3 space-y-6">
+                
+                <div id="toolSection" class="hidden animate-in fade-in duration-700">
+                    <h3 class="text-[10px] font-bold text-slate-500 uppercase mb-3 ml-1 tracking-widest">Global Search Modules</h3>
+                    <div id="toolLinks" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+                </div>
+
+                <div id="reportCard" class="glass-card rounded-2xl hidden overflow-hidden border border-slate-700/50">
+                    <div class="p-4 border-b border-slate-700/50 flex justify-between items-center bg-slate-800/50">
+                        <span class="text-xs font-bold text-blue-400 uppercase tracking-widest">Intelligence Report</span>
+                        <button onclick="speakReport()" class="text-xs flex items-center gap-2 text-slate-300 bg-slate-700 px-3 py-1 rounded-full hover:bg-slate-600">
+                            <span id="speakerIcon">🔊</span> Listen
+                        </button>
+                    </div>
+                    <div id="aiOutput" class="p-6 text-sm text-slate-300 leading-relaxed whitespace-pre-wrap font-light">
+                        Initializing neural trace...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_KEY = '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';
+        let speechSynth = window.speechSynthesis;
+
+        async function analyzeTarget() {
+            const input = document.getElementById('target').value.trim();
+            if(!input) return alert("Please enter a target!");
+
+            // UI Refresh
+            document.getElementById('statusText').innerText = "Processing through AI Engine...";
+            document.getElementById('statusIcon').innerText = "⚡";
+            document.getElementById('mainBtn').innerText = "Scanning...";
+            document.getElementById('toolSection').classList.remove('hidden');
+            document.getElementById('reportCard').classList.remove('hidden');
+            document.getElementById('aiOutput').innerText = "Connecting to global database...";
+
+            generateLinks(input);
+
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": "google/gemini-2.0-flash-001",
+                        "messages": [{
+                            "role": "system",
+                            "content": "You are InsightPro Dark, an elite investigator. 1. For persons/usernames: give full footprint and safety score. 2. For phone/email: check for fraud history. 3. For Deity/History: give deep philosophical insights. 4. Always provide a Risk Assessment (Low/Medium/High)."
+                        }, {
+                            "role": "user",
+                            "content": `Analyze: "${input}". Provide digital footprint, linked accounts, and a scam risk level.`
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const reportText = data.choices[0].message.content;
+                document.getElementById('aiOutput').innerText = reportText;
+                document.getElementById('statusText').innerText = "Investigation Finalized.";
+                document.getElementById('mainBtn').innerText = "New Scan";
+                
+                // Alert if Scam
+                if(reportText.toLowerCase().includes("scam") || reportText.toLowerCase().includes("fraud") || reportText.toLowerCase().includes("high risk")) {
+                    document.getElementById('scamIndicator').style.borderColor = "#ef4444";
+                    document.getElementById('statusIcon').innerText = "🚨";
+                    document.getElementById('statusText').innerText = "High Risk Identified!";
+                    document.getElementById('statusText').classList.add('text-red-400');
+                }
+
+            } catch (err) {
+                document.getElementById('aiOutput').innerText = "Error: Signal lost.";
+            }
+        }
+
+        function generateLinks(val) {
+            const grid = document.getElementById('toolLinks');
+            grid.innerHTML = '';
+            const clean = val.replace(/[@+]/g, '');
+
+            const tools = [
+                { n: 'Google Trace', u: `https://www.google.com/search?q="${val}"` },
+                { n: 'Truecaller', u: `https://www.truecaller.com/search/in/${clean}` },
+                { n: 'Instagram', u: `https://www.instagram.com/${clean}` },
+                { n: 'Data Leaks', u: `https://haveibeenpwned.com/` },
+                { n: 'Wiki Archives', u: `https://en.wikipedia.org/wiki/${clean}` },
+                { n: 'Email Check', u: `https://hunter.io/email-verifier/${clean}` }
+            ];
+
+            tools.forEach(t => {
+                grid.innerHTML += `<a href="${t.u}" target="_blank" class="bg-[#1e293b] border border-slate-700 p-3 text-[10px] font-bold rounded-xl text-center hover:bg-slate-700 hover:border-blue-500 transition-all text-slate-300">🌐 ${t.n}</a>`;
+            });
+        }
+
+        function speakReport() {
+            const text = document.getElementById('aiOutput').innerText;
+            if (speechSynth.speaking) {
+                speechSynth.cancel();
+                document.getElementById('speakerIcon').innerText = "🔊";
+            } else {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.voice = speechSynth.getVoices().find(v => v.lang.includes('en'));
+                utterance.onend = () => document.getElementById('speakerIcon').innerText = "🔊";
+                speechSynth.speak(utterance);
+                document.getElementById('speakerIcon').innerText = "⏹";
+            }
+        }
+    </script>
+</body>
+</html>
